@@ -5,7 +5,7 @@ pipeline {
         // The ID of the Docker Hub credentials you stored in Jenkins
         DOCKER_CREDENTIALS = credentials('dockerhub-credentials') 
         // TODO: Replace with your Docker Hub username
-        DOCKER_IMAGE_NAME = "2300039107@kluniversity.in/fitness-frontend"
+        DOCKER_IMAGE_NAME = "raja107/fitness-frontend"
     }
 
     stages {
