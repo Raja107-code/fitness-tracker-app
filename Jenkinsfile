@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_CREDENTIALS = credentials('dockerhub-credentials') 
+        // This is a simple environment variable, not a credential binding.
         DOCKER_IMAGE_NAME = "raja107/fitness-frontend"
     }
 
@@ -16,7 +16,6 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building the Docker image...'
-                // Changed 'sh' to 'bat' to run the command on a Windows agent.
                 bat "docker build -t ${DOCKER_IMAGE_NAME}:latest -f Dockerfile ."
             }
         }
@@ -24,10 +23,10 @@ pipeline {
         stage('Push to Docker Hub') {
             steps {
                 echo "Pushing the image ${DOCKER_IMAGE_NAME} to Docker Hub..."
-                script {
-                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS) {
-                        docker.image(DOCKER_IMAGE_NAME).push("latest")
-                    }
+                // The correct way to bind and use credentials for Docker login.
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    bat "docker login -u %DOCKER_USERNAME% -p %DOCKER_PASSWORD%"
+                    bat "docker push ${DOCKER_IMAGE_NAME}:latest"
                 }
             }
         }
