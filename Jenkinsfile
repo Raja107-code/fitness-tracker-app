@@ -16,9 +16,8 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building the Docker image...'
-                // The 'dir' command is removed. This command now runs from the root of the workspace.
-                // The -f flag specifies the location of the Dockerfile.
-                sh "docker build -t ${DOCKER_IMAGE_NAME}:latest -f Dockerfile ."
+                // Changed 'sh' to 'bat' to run the command on a Windows agent.
+                bat "docker build -t ${DOCKER_IMAGE_NAME}:latest -f Dockerfile ."
             }
         }
 
