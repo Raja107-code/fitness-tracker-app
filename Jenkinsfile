@@ -16,11 +16,9 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building the Docker image...'
-                dir('frontend') { 
-                    // *** THIS IS THE CORRECTED LINE ***
-                    // Changed single quotes to double quotes to allow variable substitution
-                    bat "docker build -t ${DOCKER_IMAGE_NAME}:latest ."
-                }
+                // The 'dir' command is removed. This command now runs from the root of the workspace.
+                // The -f flag specifies the location of the Dockerfile.
+                sh "docker build -t ${DOCKER_IMAGE_NAME}:latest -f Dockerfile ."
             }
         }
 
