@@ -1,6 +1,7 @@
 // src/pages/LandingPage.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login, signup } from '../api';
 import '../pagescss/landingpage.css';
 
 const LandingPage = () => {
@@ -16,7 +17,7 @@ const LandingPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const API_BASE_URL = 'http://localhost:8081';
+
 
   useEffect(() => {
     const loggedIn = localStorage.getItem('isLoggedIn');
@@ -95,58 +96,41 @@ const LandingPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateLogin()) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.loginUsername,
-          password: formData.loginPassword
-        }),
+      const data = await login({
+        username: formData.loginUsername,
+        password: formData.loginPassword
       });
-
-      // Check if response has content
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('Response is not JSON:', contentType);
-        const text = await response.text();
-        console.error('Response body:', text);
-        throw new Error('Server returned non-JSON response');
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(data.error || 'Invalid username or password');
-        } else if (response.status === 400) {
-          throw new Error(data.error || 'Invalid request data');
-        } else {
-          throw new Error(data.error || data.message || `Login failed with status ${response.status}`);
-        }
-      }
 
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('userId', data.user.id);
       localStorage.setItem('userEmail', data.user.email);
-      
+
       closeModal();
       navigate('/home');
-      
+
     } catch (err) {
       console.error('Login error:', err);
-      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
-        setError('Cannot connect to the server. Please ensure the backend is running on http://localhost:8081 and no firewall is blocking the connection.');
-      } else if (err.message === 'Server returned non-JSON response') {
-        setError('Server error: Invalid response format. Please check the backend logs.');
+      if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const data = err.response.data;
+        if (status === 401) {
+          setError(data.error || 'Invalid username or password');
+        } else if (status === 400) {
+          setError(data.error || 'Invalid request data');
+        } else {
+          setError(data.error || data.message || `Login failed with status ${status}`);
+        }
+      } else if (err.request) {
+        // Network error
+        setError('Cannot connect to the server. Please ensure the backend is running on http://localhost:8081.');
       } else {
         setError(err.message || 'An error occurred during login');
       }
@@ -158,59 +142,42 @@ const LandingPage = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!validateSignup()) return;
-    
+
     setLoading(true);
-    
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/users/signup`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: formData.signupUsername,
-          email: formData.signupEmail,
-          password: formData.signupPassword
-        }),
+      const data = await signup({
+        username: formData.signupUsername,
+        email: formData.signupEmail,
+        password: formData.signupPassword
       });
-
-      // Check if response has content
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('Response is not JSON:', contentType);
-        const text = await response.text();
-        console.error('Response body:', text);
-        throw new Error('Server returned non-JSON response');
-      }
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 400) {
-          throw new Error(data.error || 'Invalid registration data');
-        } else if (response.status === 409) {
-          throw new Error(data.error || 'User already exists');
-        } else {
-          throw new Error(data.error || data.message || `Signup failed with status ${response.status}`);
-        }
-      }
 
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('username', data.user.username);
       localStorage.setItem('userId', data.user.id);
       localStorage.setItem('userEmail', data.user.email);
-      
+
       closeModal();
       navigate('/home');
-      
+
     } catch (err) {
       console.error('Signup error:', err);
-      if (err.name === 'TypeError' && err.message.includes('Failed to fetch')) {
+      if (err.response) {
+        // Server responded with error status
+        const status = err.response.status;
+        const data = err.response.data;
+        if (status === 400) {
+          setError(data.error || 'Invalid registration data');
+        } else if (status === 409) {
+          setError(data.error || 'User already exists');
+        } else {
+          setError(data.error || data.message || `Signup failed with status ${status}`);
+        }
+      } else if (err.request) {
+        // Network error
         setError('Cannot connect to the server. Please ensure the backend is running on http://localhost:8081.');
-      } else if (err.message === 'Server returned non-JSON response') {
-        setError('Server error: Invalid response format. Please check the backend logs.');
       } else {
         setError(err.message || 'An error occurred during signup');
       }

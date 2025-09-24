@@ -4,14 +4,14 @@ pipeline {
     environment {
         // The ID of the Docker Hub credentials you stored in Jenkins
         DOCKER_CREDENTIALS = credentials('dockerhub-credentials') 
-        // TODO: Replace with your Docker Hub username
+        // Your Docker Hub username and the desired image name
         DOCKER_IMAGE_NAME = "raja107/fitness-frontend"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
-                // TODO: Replace with your frontend repository's URL
+                // This step checks out your code from GitHub
                 git branch: 'main', url: 'https://github.com/Raja107-code/fitness-tracker-app.git'
             }
         }
@@ -19,18 +19,21 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo 'Building the Docker image...'
-                script {
-                    // This command builds the image using the Dockerfile in your repo
-                    docker.build(DOCKER_IMAGE_NAME, ".")
+                
+                // *** THIS IS THE MAIN CHANGE ***
+                // We must first change into the 'frontend' directory where the Dockerfile is located.
+                dir('frontend') { 
+                    bat 'docker build -t "${DOCKER_IMAGE_NAME}:latest" .'
                 }
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                echo 'Pushing the image to Docker Hub...'
+                echo "Pushing the image ${DOCKER_IMAGE_NAME} to Docker Hub..."
                 script {
-                    // This logs into Docker Hub and pushes the image
+                    // This block logs into Docker Hub and pushes the image
+                    // It requires the "Docker Pipeline" plugin to be installed in Jenkins.
                     docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS) {
                         docker.image(DOCKER_IMAGE_NAME).push("latest")
                     }
